@@ -1,0 +1,72 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.python-version
+
+# Jupyter and notebook checkpoints
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Datasets and downloaded biomedical data
+data/kg.csv
+data/raw/
+data/downloads/
+data/splits/
+*.csv
+*.tsv
+*.pkl
+*.pickle
+*.parquet
+
+# Model checkpoints and experiment outputs
+outputs/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+
+# Logs and generated reports
+logs/
+*.log
+*.out
+*.jsonl
+tensorboard/
+wandb/
+mlruns/
+
+# Generated figures and temporary files
+figures/generated/
+tmp/
+temp/
+*.tmp
+*.bak
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration
+.env.*
+!.env.example
+secrets/
+
+# Build and packaging files
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
