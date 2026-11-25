@@ -84,6 +84,16 @@ Expect popularity to drop to AP ≈ 0.36 / AUROC ≈ 0.72, and the oracle to fal
 !python -m pcgate summarize --config configs/primekg_colab_eligible.yaml
 !python -m pcgate coverage  --config configs/primekg_colab_eligible.yaml"""),
 
+("md", """### Candidate table and explanation case study (primary protocol)
+
+Both need a trained `model.pt`, and the results zip deliberately excludes checkpoints (8 MB each),
+so they are generated **here**, where the checkpoints live, and travel back as CSV/JSON.
+
+`explain` defaults to the `gated` model; `--model sage` runs it against what is trained today.
+Swap to `--model gated` once the gate exists."""),
+("code", """!python -m pcgate candidates --config configs/primekg_colab_eligible.yaml --model sage | head -20
+!python -m pcgate explain    --config configs/primekg_colab_eligible.yaml --model sage"""),
+
 ("md", "### Pool comparison: all drugs vs eligible drugs, same models"),
 ("code", """import pandas as pd
 old = pd.read_csv('DRIVE_RESULTS/primekg/all_runs.csv').assign(pool='all drugs (7957)')

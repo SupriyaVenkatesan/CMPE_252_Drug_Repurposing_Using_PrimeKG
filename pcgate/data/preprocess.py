@@ -152,7 +152,8 @@ def preprocess(raw_csv: str | Path, out_dir: str | Path, cfg: dict | None = None
     dst_t = np.where(swap, e["x_type"], e["y_type"])
     src = np.where(swap, e["y"], e["x"])
     dst = np.where(swap, e["x"], e["y"])
-    edges = pd.DataFrame({"relation": e["relation"], "src_type": src_t, "src": src,
+    edges_key_rel = e["relation"].to_numpy()
+    edges = pd.DataFrame({"relation": edges_key_rel, "src_type": src_t, "src": src,
                           "dst_type": dst_t, "dst": dst})
     before = len(edges)
     edges = edges.drop_duplicates().sort_values(
@@ -160,6 +161,33 @@ def preprocess(raw_csv: str | Path, out_dir: str | Path, cfg: dict | None = None
     audit["rows_after_invalid_removal"] = int(before)
     audit["unique_canonical_edges"] = int(len(edges))
     audit["duplicate_or_reverse_rows_removed"] = int(before - len(edges))
+
+    # A relationship is normally stored exactly twice (once per direction). Anything stored more
+    # often is the SAME (relation, endpoints) triple carrying more than one `display_relation`
+    # sub-type - e.g. a drug-protein pair recorded as both "enzyme" and "target". The graph is
+    # keyed on `relation`, so those collapse to one edge and the sub-type distinction is dropped.
+    # This is the documented reason our edge count differs from a naive raw-rows / 2.
+    key = pd.DataFrame({"relation": edges_key_rel, "src_type": src_t, "src": src,
+                        "dst_type": dst_t, "dst": dst, "display": df["display_relation"].to_numpy()})
+    sub = (key.groupby(["relation", "src_type", "src", "dst_type", "dst"], sort=False)["display"]
+              .nunique())
+    multi = sub[sub > 1]
+    audit["edges_with_multiple_display_relations"] = int(len(multi))
+    audit["edges_with_multiple_display_relations_by_relation"] = (
+        multi.reset_index()["relation"].value_counts().to_dict())
+    audit["naive_rows_over_2"] = int(before // 2)
+    gap = int(before // 2 - len(edges))
+    residual = gap - int(len(multi))
+    audit["edge_count_gap_vs_naive"] = gap
+    audit["edge_count_gap_unexplained"] = residual
+    note = (f"{before:,} rows -> {len(edges):,} unique canonical edges. A naive rows/2 gives "
+            f"{before // 2:,}, a difference of {gap:,}. Of that, {len(multi):,} comes from "
+            f"(relation, endpoint) pairs stored under more than one display_relation sub-type, "
+            f"which collapse to one edge because the graph is keyed on `relation`.")
+    note += (" That accounts for the whole difference." if residual == 0 else
+             f" The remaining {residual:,} comes from rows that repeat a (relation, endpoint) "
+             f"pair outright, i.e. exact duplicates in the source.")
+    audit["note_edge_count"] = note
     edges.to_csv(out_dir / "edges.csv", index=False)
 
     # ---------------- target extraction ----------------

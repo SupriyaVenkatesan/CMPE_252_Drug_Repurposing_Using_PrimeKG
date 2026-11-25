@@ -34,6 +34,13 @@ No patient records, paid data or the original HGTDR dataset are used.
 | drugs with >=1 indication | 1801 |
 | diseases with >=1 indication | 1363 |
 
+
+**Why the edge count differs from a naive rows / 2.** 8,100,498 rows -> 4,050,064 unique canonical edges. A naive rows/2 gives 4,050,249, a difference of 185. Of that, 185 comes from (relation, endpoint) pairs stored under more than one display_relation sub-type, which collapse to one edge because the graph is keyed on `relation`. That accounts for the whole difference.
+
+Affected relations: `drug_protein` (185)
+
+These keep one edge each; only the `display_relation` sub-type is dropped, and no model uses that column.
+
 Missing values per column (raw): none
 
 ## Node types

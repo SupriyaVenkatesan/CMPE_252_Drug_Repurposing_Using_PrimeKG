@@ -633,8 +633,8 @@
       0.0
     ]
   },
-  "eval_time_s": 0.09302020072937012,
-  "throughput_pairs_per_s": 4150130.7992567057,
+  "eval_time_s": 0.06430315971374512,
+  "throughput_pairs_per_s": 6003530.801885009,
   "setting": "disease",
   "model": "popularity",
   "seed": 0,

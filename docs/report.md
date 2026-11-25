@@ -30,7 +30,18 @@ or the original HGTDR dataset are used.
 | contraindication / off-label edges | 30,675 / 2,568; overlap with indications 87 / 125 pairs; both excluded from the graph |
 | training graph | ≈8.03 M directed edges, 103 node features |
 
-The 185-edge gap against the published count is untraced.
+**The 185-edge gap against the published count is accounted for.** PrimeKG stores each
+relationship twice, so raw rows ÷ 2 gives 4,050,249 — the published figure. Of those, 4,049,879
+relationships appear exactly twice and **185 appear four times**: the same `drug_protein` pair
+recorded under two different `display_relation` sub-types, such as WARS2–Tryptophan as both
+*enzyme* and *target*, or SLCO1B1–Fluticasone propionate as both *carrier* and *transporter*.
+They are not duplicate rows. The graph is keyed on `relation`, so each collapses to one edge,
+giving 4,050,249 − 185 = 4,050,064.
+
+The cost is that for those 185 pairs (0.36 % of 51,306 `drug_protein` edges) the sub-type
+distinction is dropped. No model reads `display_relation`, so nothing downstream changes, but it
+is a modelling choice rather than a cleaning artefact. `preprocess` now computes this directly
+and `dataset_report.md` reports it, so the figure is derived rather than asserted.
 
 **Schema.** The ten released node types are kept as published; the combined `gene/protein` type is
 retained and only sanitised to `gene_protein` for use as a key. No new node types or inferred
