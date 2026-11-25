@@ -105,6 +105,27 @@ def test_split_partitions_and_pools(setting):
                 assert (int(d), int(s)) in known and (int(d), int(s)) not in part
 
 
+def test_paired_comparison_selection():
+    """The reported paired differences depend on which pairs are selected and how seeds are
+    matched. A deterministic baseline has one run, so every seed of the other model must be
+    compared against it; with no learned models beyond popularity there is nothing to compare."""
+    from pcgate.report import _comparisons, _seed_pairs
+
+    assert ("sage", "popularity") in _comparisons({"sage", "popularity"})
+    assert _comparisons({"popularity"}) == []
+    full = _comparisons({"gated", "hgt", "uniform", "param_matched", "sage", "popularity"})
+    for designed in [("gated", "hgt"), ("gated", "uniform"), ("gated", "param_matched")]:
+        assert designed in full
+    assert len(full) == len(set(full)), "comparison list must not repeat a pair"
+
+    # deterministic baseline: 3 seeds vs the single reference run
+    assert _seed_pairs([0, 1, 2], [0]) == [(0, 0), (1, 0), (2, 0)]
+    assert _seed_pairs([0], [0, 1, 2]) == [(0, 0), (0, 1), (0, 2)]
+    # both multi-seed: matched one-to-one, and only on seeds present in both
+    assert _seed_pairs([0, 1, 2], [0, 1, 2]) == [(0, 0), (1, 1), (2, 2)]
+    assert _seed_pairs([0, 1, 5], [0, 1]) == [(0, 0), (1, 1)]
+
+
 def test_split_is_reproducible():
     pairs = _pairs()
     a = make_split(pairs, 60, "disease", seed=5)

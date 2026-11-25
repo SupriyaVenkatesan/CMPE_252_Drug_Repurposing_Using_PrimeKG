@@ -88,7 +88,7 @@ python -m pcgate run        --config configs/primekg_eligible.yaml   # train + e
 python -m pcgate summarize  --config configs/primekg_eligible.yaml   # tables, paired diffs, CIs
 ```
 
-Other commands: `schema` (dataset/licence report), `pooldiag` (pool sanity), `coverage`
+Other commands: `schema` (dataset/licence report, written to results/), `pooldiag` (pool sanity), `coverage`
 (degree analysis), `candidates` (ranked hypotheses), `explain` (path case study), `profile`
 (runtime/memory), `synth` (synthetic graph for a CPU smoke test via `configs/synthetic.yaml`).
 
@@ -106,7 +106,8 @@ pools, and the leakage checks including a deliberately injected leak.
 ```
 pcgate/data/   preprocess.py  splits.py  graph.py  checks.py  synthetic.py
 pcgate/        models.py  train.py  evaluate.py  report.py  analysis.py  explain.py  cli.py
-configs/       primekg_eligible.yaml (primary)  primekg.yaml (all-drug)  *_colab*.yaml  synthetic.yaml
+configs/       primekg_eligible.yaml (primary)  primekg.yaml (all-drug)
+               primekg_noindfeat.yaml (ablation)  *_colab*.yaml  synthetic.yaml
 colab/         build_notebook.py  run_graphsage_colab.ipynb
 docs/          report.md  proposal.pdf
 tests/         test_pipeline.py

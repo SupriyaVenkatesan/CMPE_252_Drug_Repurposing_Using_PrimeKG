@@ -28,7 +28,12 @@ def _md_table(df: pd.DataFrame) -> str:
 
 
 # ============================================================================ Week 1
-def schema_report(raw_csv: str, processed: str) -> str:
+def schema_report(raw_csv: str, processed: str, out_dir: str | None = None) -> str:
+    """Write the dataset pin / schema / usage-terms report.
+
+    Writes to `out_dir` (the results directory) rather than next to the processed data, which
+    is gitignored — this is a reportable deliverable and needs to reach the repository.
+    """
     processed = Path(processed)
     audit = read_json(processed / "audit.json")
     prov_p = Path(raw_csv).parent / "provenance.json"
@@ -78,7 +83,8 @@ def schema_report(raw_csv: str, processed: str) -> str:
         L.append(f"| {r} | {n} | {ov} | no (treatment-label proxy) |")
     L.append(f"| indication | {audit['unique_indication_pairs']} | - | training partition only |")
     L += ["", "Contraindication and off-label relations are never merged into indication labels.", ""]
-    out = processed / "dataset_report.md"
+    out = Path(out_dir or processed) / "dataset_report.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L), encoding="utf-8")
     return str(out)
 

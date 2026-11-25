@@ -1,0 +1,12 @@
+# Ablation under the PRIMARY protocol: node features carry no indication-derived columns
+# (103 -> 99). Local counterpart of configs/primekg_colab_noindfeat.yaml, which writes to
+# Google Drive; this one reads and writes the same results folder on disk so the ablation
+# can be summarised and re-run without Colab.
+#
+# Result: removing the features does NOT fix the disease-held-out weakness, it collapses it
+# (Recall@10 0.053 -> 0.005). They are kept in the primary configuration. See docs/report.md.
+base: primekg_eligible.yaml
+paths:
+  results: results/primekg_eligible_noindfeat
+data:
+  indication_degree_feature: false
