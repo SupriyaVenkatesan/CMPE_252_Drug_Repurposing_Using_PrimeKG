@@ -16,10 +16,20 @@
 !/results/**/pool_diagnostic.csv
 !/results/**/profile*.csv
 !/results/**/metrics.json
+# Member 2: tuning record, gate analysis, explanation case study, frozen-config copies
+!/results/**/tuning/trials.csv
+!/results/**/tuning/best.json
+!/results/**/gates/**/gates.md
+!/results/**/gates/**/gate_*.csv
+!/results/**/gates/**/gate_summary.json
+!/results/**/explanations.json
+# synthetic smoke-test output is never a result
+/results/synthetic*/
 # excluded by the rules above: model.pt (8 MB), candidates_*.csv (3 MB), run logs, history.csv
 
 # ---- Build artefacts ----
 pcgate_colab_bundle.zip
+configs/synthetic_member2_frozen.yaml
 *_results.zip
 
 # ---- Python ----
