@@ -1,0 +1,18 @@
+# Ablation: same as primekg_colab.yaml, but node features carry NO indication-derived
+# degree/missingness columns.
+#
+# Why: the training-indication-degree feature is 0 for every held-out disease and large for
+# every training disease, so a model can learn "this disease already has known treatments"
+# as a shortcut instead of learning from biology. That is a plausible cause of the
+# disease-held-out collapse (GraphSAGE Recall@10 0.053 vs popularity 0.082, and 0.016 on the
+# lowest-degree tertile). The feature is leakage-free (training edges only) and all six
+# integrity checks pass either way, so this is a design question, not a correctness fix.
+#
+# Everything else - splits, candidate pools, metrics, model, seeds - is identical, so the
+# numbers are directly comparable with results/primekg_eligible (NOT with results/primekg,
+# which uses the older all-drug pool).
+base: primekg_colab_eligible.yaml   # ablation runs under the PRIMARY (eligible-drug) protocol
+paths:
+  results: /content/drive/MyDrive/pcgate/results/primekg_eligible_noindfeat
+data:
+  indication_degree_feature: false

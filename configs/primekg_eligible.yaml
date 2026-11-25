@@ -1,0 +1,22 @@
+# PRIMARY evaluation protocol: the candidate / unlabeled pool is restricted to drug nodes that
+# carry at least one documented indication in the pinned release (1,801 of 7,957).
+#
+# Why: with all 7,957 drug nodes in the pool, ~78% of unlabeled pairs involve drugs that are never
+# indicated for anything, and an "eligibility oracle" that ignores the disease entirely reaches
+# AUROC 0.89 (see `pcgate pooldiag`, results/primekg/pool_diagnostic.md). AP and AUROC then mostly
+# measure that one bit of information. Recall@10 was never affected.
+#
+# What this uses: eligibility is derived from the indication labels of the whole release, i.e.
+# label-set-level information, not the individual held-out pair. Deriving it from training labels
+# alone is NOT viable - in the drug-held-out setting held-out drugs have no training indications
+# by construction, so the pool would be empty, and in the other settings test positives whose drug
+# appears only in test would become unrecoverable. The policy is identical for every model.
+#
+# Train/val/test PAIRS are unchanged from configs/primekg.yaml (the same seed and partition);
+# only the candidate pools and the sampled unlabeled pairs differ. Splits live in their own
+# directory (`*_with_indication`), so the all-drug results stay reproducible as a secondary table.
+base: primekg.yaml
+paths:
+  results: results/primekg_eligible
+data:
+  eligible_drugs: with_indication

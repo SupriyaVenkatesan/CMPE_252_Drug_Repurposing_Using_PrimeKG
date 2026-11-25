@@ -1,0 +1,4 @@
+setting,test_pairs,test_diseases,evaluable_diseases,test_drugs,candidate_universe,median_pos_per_disease,median_test_disease_degree,median_test_drug_degree,test_diseases_zero_train_labels
+random,1408,643,643,738,7957,1.0,32.0,893.0,84
+drug,1403,640,640,270,270,1.0,29.0,851.0,67
+disease,1531,205,205,782,7957,3.0,17.0,854.0,205

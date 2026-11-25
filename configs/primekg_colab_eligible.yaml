@@ -1,0 +1,6 @@
+# Colab T4 version of the primary protocol (see configs/primekg_eligible.yaml).
+base: primekg_colab.yaml
+paths:
+  results: /content/drive/MyDrive/pcgate/results/primekg_eligible
+data:
+  eligible_drugs: with_indication
