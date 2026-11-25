@@ -1,0 +1,16 @@
+# Google Colab (T4 GPU): same experiment as primekg.yaml, but results are written to
+# Google Drive so finished runs survive a runtime disconnect (`run` skips runs that
+# already have metrics.json, so re-running the cell resumes where it stopped).
+base: primekg.yaml
+device: cuda
+paths:
+  raw_csv: data/raw/primekg/kg.csv
+  processed: data/processed/primekg
+  results: /content/drive/MyDrive/pcgate/results/primekg
+train:
+  verbose: true          # per-epoch loss / validation metrics in the notebook output
+profile:
+  setting: disease
+  hiddens: [64, 128]     # hidden 128 only if pilot results support it (proposal 10.6)
+  batch_sizes: [1024]
+  steps: 5

@@ -1,0 +1,69 @@
+# Full PrimeKG experiment (target: one 16-24 GB CUDA GPU, 32-64 GB RAM).
+device: auto
+paths:
+  raw_csv: data/raw/primekg/kg.csv
+  processed: data/processed/primekg
+  results: results/primekg
+
+data:
+  indication_relation: indication
+  # Treatment-label proxies are excluded from message passing (proposal 6.3).
+  exclude_relations: [contraindication, off-label use]
+  indication_degree_feature: true     # computed from TRAINING indication edges only
+  split_seed: 0
+  split_fractions: [0.7, 0.15, 0.15]
+  unlabeled_ratio: 10                 # AP pool: 1 positive : 10 unlabeled
+  eligible_drugs: all                 # all drug-type nodes; or "with_indication"
+
+model:
+  hidden: 64          # 128 only if pilot runs support it
+  decoder_hidden: 64
+  layers: 2
+  heads: 2
+  dropout: 0.2
+  context_embeddings: true   # learnable ids for non-drug/non-disease nodes only
+
+train:
+  lr: 0.001
+  weight_decay: 1.0e-5    # lambda * ||theta||^2
+  batch_size: 1024
+  negatives: 5
+  epochs: 100
+  patience: 10
+  eval_every: 1
+  select_metric: ap       # early stopping / model selection on VALIDATION AP
+  mask_batch_edges: true
+  grad_clip: 5.0
+  verbose: true
+
+experiments:
+  all_settings: [random, drug, disease]
+  settings: [random, drug, disease]          # E1-E3
+  models: [popularity, sage, hgt, gated]
+  control_settings: [disease]                # E4: controls first on disease-held-out
+  control_models: [uniform, param_matched]
+  seeds: [0, 1, 2]
+
+report:
+  bootstrap: 1000
+
+candidates:
+  setting: random
+  model: gated
+  seed: 0
+  diseases: with_indication
+  top_k_per_disease: 10
+
+explain:                                     # E5
+  setting: disease
+  model: gated
+  seed: 0
+  n_cases: 10
+  max_paths: 5
+  n_random: 20
+
+profile:                                     # W3 memory/runtime study
+  setting: disease
+  hiddens: [64]
+  batch_sizes: [1024]
+  steps: 3

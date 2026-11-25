@@ -1,0 +1,25 @@
+# Laptop/CPU smoke test on synthetic PrimeKG-format data. Not a scientific result.
+base: primekg.yaml
+device: cpu
+synthetic:
+  seed: 7
+  n_modules: 8
+  indications_per_disease: [2, 10]
+paths:
+  raw_csv: data/raw/synthetic/kg.csv
+  processed: data/processed/synthetic
+  results: results/synthetic
+train:
+  batch_size: 64
+  epochs: 40
+  patience: 8
+  verbose: false
+experiments:
+  control_settings: [disease, random]
+explain:
+  n_random: 10
+
+profile:
+  hiddens: [64, 128]
+  batch_sizes: [256, 1024]
+  steps: 5
