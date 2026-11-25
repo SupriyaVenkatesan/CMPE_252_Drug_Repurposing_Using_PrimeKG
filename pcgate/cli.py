@@ -322,7 +322,7 @@ def cmd_explain(cfg, args):
 
 def cmd_schema(cfg, args):
     from .analysis import schema_report
-    p = schema_report(cfg["paths"]["raw_csv"], cfg["paths"]["processed"])
+    p = schema_report(cfg["paths"]["raw_csv"], cfg["paths"]["processed"], cfg["paths"]["results"])
     print(f"wrote {p}")
 
 

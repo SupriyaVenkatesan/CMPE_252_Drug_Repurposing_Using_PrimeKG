@@ -152,22 +152,35 @@ decimal places.
 
 ### 4.3 Baselines under the primary protocol
 
-GraphSAGE: mean ± std over 3 seeds, Colab T4. Popularity is deterministic.
+GraphSAGE: mean ± std over 3 seeds, Colab T4. Popularity is deterministic (one run).
 
 | setting | model | AP | AUROC | Recall@10 | NDCG@10 |
 |---|---|---|---|---|---|
 | random-pair | popularity | **0.361** | **0.724** | 0.134 | 0.131 |
 | random-pair | GraphSAGE | 0.291 ± 0.007 | 0.684 | 0.134 ± 0.002 | 0.129 |
 | drug-held-out | popularity | 0.097 | 0.545 | 0.043 | 0.021 |
-| drug-held-out | GraphSAGE | **0.110 ± 0.006** | **0.564** | 0.043 ± 0.007 | 0.022 |
+| drug-held-out | GraphSAGE | 0.110 ± 0.006 | 0.564 | 0.043 ± 0.007 | 0.022 |
 | disease-held-out | popularity | **0.363** | **0.742** | **0.082** | **0.101** |
 | disease-held-out | GraphSAGE | 0.174 ± 0.015 | 0.604 | 0.053 ± 0.014 | 0.068 |
 
-GraphSAGE does not beat the popularity baseline except in drug-held-out, and there only slightly.
-Disease-held-out is its weakest setting by a wide margin. The paired per-seed AP difference
-(GraphSAGE − popularity) has the same sign on all three seeds everywhere: random
-−0.062/−0.076/−0.072, disease-held-out −0.201/−0.193/−0.172, drug-held-out +0.008/+0.012/+0.019,
-so this is not seed noise.
+**Paired differences and uncertainty.** Popularity is deterministic, so each GraphSAGE seed is
+compared against the same reference run. The bootstrap CI resamples held-out diseases on the fixed
+split (`results/*/summary.md`).
+
+| setting | ΔAP per seed | mean ΔAP | sign | mean ΔRecall@10 | 95% CI on ΔRecall@10 |
+|---|---|---|---|---|---|
+| random-pair | −0.062 / −0.076 / −0.072 | −0.070 | all − | −0.0003 | [−0.0063, +0.0058] |
+| drug-held-out | +0.008 / +0.012 / +0.019 | +0.013 | all + | +0.0006 | [−0.0106, +0.0117] |
+| disease-held-out | −0.201 / −0.193 / −0.172 | −0.189 | all − | −0.0290 | **[−0.0459, −0.0127]** |
+
+Reading these together changes one conclusion from the raw table above:
+
+* **Disease-held-out: GraphSAGE is reliably worse than popularity.** The AP deficit holds on every seed and the Recall@10 CI excludes zero. This is the one difference that is both consistent and statistically distinguishable.
+* **Drug-held-out: the apparent GraphSAGE win is not established.** AP is higher on all three seeds, but the Recall@10 CI spans zero ([−0.011, +0.012]), so on the ranking metric the two are indistinguishable given disease-level variability. It should be described as "no worse than popularity", not as a win.
+* **Random-pair: a tie on ranking.** AP is consistently lower, but Recall@10 is effectively identical and its CI spans zero.
+
+The CI covers disease-level variability on one fixed split; it does not capture split-to-split
+variance, so it bounds less uncertainty than it may appear to.
 
 Every run selected its checkpoint within the first 4–10 epochs; in disease-held-out, validation
 Recall@10 peaks by epoch 4 and then falls towards 0 while training loss keeps dropping.

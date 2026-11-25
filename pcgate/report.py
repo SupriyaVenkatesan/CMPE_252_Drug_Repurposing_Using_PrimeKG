@@ -11,7 +11,31 @@ from .utils import read_json
 
 METRICS = ["ap", "recall@10", "auroc", "precision@10", "ndcg@10", "recall@20"]
 ORDER = ["popularity", "sage", "hgt", "uniform", "param_matched", "gated"]
-COMPARISONS = [("gated", "hgt"), ("gated", "uniform"), ("gated", "param_matched"), ("hgt", "sage")]
+# Contrasts the study is designed around (proposal E4), plus every learned model against the
+# popularity reference. Pairs whose models have no results are skipped, so the table appears as
+# soon as any two comparable models exist instead of staying empty until the gate is trained.
+DESIGNED = [("gated", "hgt"), ("gated", "uniform"), ("gated", "param_matched"),
+            ("hgt", "sage"), ("hgt", "popularity"), ("sage", "popularity")]
+
+
+def _comparisons(models: set) -> list[tuple[str, str]]:
+    out = [p for p in DESIGNED if p[0] in models and p[1] in models]
+    if "popularity" in models:
+        for m in ORDER:
+            if m not in ("popularity",) and m in models and (m, "popularity") not in out:
+                out.append((m, "popularity"))
+    return out
+
+
+def _seed_pairs(seeds_a: list, seeds_b: list) -> list[tuple]:
+    """Pair runs for a paired difference. A deterministic model (popularity) has a single run,
+    so each of the other model's seeds is compared against that same reference run; otherwise
+    seeds are matched one-to-one."""
+    if len(seeds_b) == 1:
+        return [(s, seeds_b[0]) for s in seeds_a]
+    if len(seeds_a) == 1:
+        return [(seeds_a[0], s) for s in seeds_b]
+    return [(s, s) for s in sorted(set(seeds_a) & set(seeds_b))]
 
 
 def _load(results: Path) -> list[dict]:
@@ -71,22 +95,26 @@ def summarize(results: Path, n_boot: int = 1000) -> Path:
         lines.append("")
         # paired seed differences + bootstrap CI
         comp_lines = []
-        for a, b in COMPARISONS:
+        for a, b in _comparisons(set(g["model"])):
             xa, xb = g[g["model"] == a].set_index("seed"), g[g["model"] == b].set_index("seed")
-            seeds = sorted(set(xa.index) & set(xb.index))
-            if not seeds:
+            pairs = _seed_pairs(sorted(xa.index), sorted(xb.index))
+            if not pairs:
                 continue
-            d_ap = [xa.loc[s, "ap"] - xb.loc[s, "ap"] for s in seeds]
-            d_r = [xa.loc[s, "recall@10"] - xb.loc[s, "recall@10"] for s in seeds]
-            ra = [r for r in runs if r["setting"] == setting and r["model"] == a and r["seed"] in seeds]
-            rb = [r for r in runs if r["setting"] == setting and r["model"] == b and r["seed"] in seeds]
-            lo, hi = _bootstrap_diff(ra, rb, n_boot, rng)
+            d_ap = [xa.loc[i, "ap"] - xb.loc[j, "ap"] for i, j in pairs]
+            d_r = [xa.loc[i, "recall@10"] - xb.loc[j, "recall@10"] for i, j in pairs]
+            sel = lambda m, ss: [r for r in runs if r["setting"] == setting and r["model"] == m
+                                 and r["seed"] in ss]
+            lo, hi = _bootstrap_diff(sel(a, {i for i, _ in pairs}), sel(b, {j for _, j in pairs}),
+                                     n_boot, rng)
+            sign = "all +" if all(v > 0 for v in d_ap) else "all −" if all(v < 0 for v in d_ap) else "mixed"
             comp_lines.append(
-                f"| {a} − {b} | {len(seeds)} | {', '.join(f'{v:+.4f}' for v in d_ap)} | {np.mean(d_ap):+.4f} | "
-                f"{', '.join(f'{v:+.4f}' for v in d_r)} | {np.mean(d_r):+.4f} | [{lo:+.4f}, {hi:+.4f}] |")
+                f"| {a} − {b} | {len(pairs)} | {', '.join(f'{v:+.4f}' for v in d_ap)} | {np.mean(d_ap):+.4f} | "
+                f"{sign} | {np.mean(d_r):+.4f} | [{lo:+.4f}, {hi:+.4f}] |")
         if comp_lines:
-            lines += ["Paired seed differences (same split, same seeds):", "",
-                      "| comparison | seeds | ΔAP per seed | mean ΔAP | ΔR@10 per seed | mean ΔR@10 | 95% bootstrap CI ΔR@10 (diseases) |",
+            lines += ["Paired differences. A deterministic model (popularity) has one run, so each "
+                      "seed of the other model is compared against it; otherwise seeds are matched "
+                      "one-to-one. 'ΔAP sign' says whether the difference holds across every seed.", "",
+                      "| comparison | n | ΔAP per seed | mean ΔAP | ΔAP sign | mean ΔR@10 | 95% bootstrap CI ΔR@10 (diseases) |",
                       "|---|---|---|---|---|---|---|"] + comp_lines + [""]
     out = results / "summary.md"
     out.write_text("\n".join(lines), encoding="utf-8")
