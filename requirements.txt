@@ -1,0 +1,20 @@
+# Install PyTorch FIRST, matching your platform and CUDA version:
+#   https://pytorch.org/get-started/locally/
+# It is deliberately not pinned here: the CPU and CUDA builds are different wheels, and
+# pinning one breaks the other. Verified with 2.15.0+cpu locally and the preinstalled
+# CUDA build on a Colab T4.
+torch>=2.2
+
+torch_geometric==2.8.1
+pandas==3.1.1
+numpy==2.4.6
+scikit-learn==1.9.1
+PyYAML==6.0.3
+psutil==7.2.2
+
+# tests
+pytest==9.2.0
+
+# On Colab, do NOT install this file - the runtime already ships compatible versions of
+# torch, pandas, numpy and scikit-learn, and reinstalling them wastes time or breaks CUDA.
+# The notebook installs only what is missing:  pip install torch_geometric pyyaml
