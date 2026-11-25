@@ -1,0 +1,35 @@
+# CPU smoke test of the Member 2 path (tune -> freeze -> run -> gates -> explain) on synthetic
+# PrimeKG-format data. Not a scientific result.
+#   python -m pcgate synth   --config configs/synthetic.yaml
+#   python -m pcgate prepare --config configs/synthetic.yaml
+#   python -m pcgate tune    --config configs/synthetic_member2.yaml --freeze-to configs/synthetic_member2_frozen.yaml
+base: synthetic.yaml
+paths:
+  results: results/synthetic_member2
+train:
+  epochs: 8
+  patience: 4
+experiments:
+  settings: [disease]
+  models: [popularity, hgt, gated]
+  control_settings: [disease]
+  control_models: [uniform, param_matched]
+  seeds: [0, 1]
+tune:
+  models: [hgt, gated]
+  settings: [disease]
+  seeds: [0]
+  max_trials: 2
+  epochs: 4
+  patience: 4
+  grid:
+    model.hidden: [32, 64]
+    model.dropout: [0.2]
+gates:
+  setting: disease
+explain:
+  setting: disease
+  model: gated
+  n_cases: 3
+  max_paths: 2
+  n_random: 3

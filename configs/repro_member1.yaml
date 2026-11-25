@@ -1,0 +1,12 @@
+# Dec 2 reproducibility check (Member 2 reproduces a small Member 1 experiment):
+# popularity + GraphSAGE seed 0 on disease-held-out, primary protocol, into a SEPARATE results dir.
+#   python -m pcgate run --config configs/repro_member1.yaml
+#   python scripts/compare_runs.py results/primekg_eligible results/repro_member1 --setting disease
+base: primekg_eligible.yaml
+paths:
+  results: results/repro_member1
+experiments:
+  settings: [disease]
+  models: [popularity, sage]
+  control_settings: []
+  seeds: [0]

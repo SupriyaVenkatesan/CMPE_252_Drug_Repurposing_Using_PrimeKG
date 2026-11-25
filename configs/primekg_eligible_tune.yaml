@@ -1,0 +1,21 @@
+# Member 2 - bounded tuning of HGT and gated HGT under the PRIMARY (eligible-drug) protocol.
+#
+#   python -m pcgate tune --config configs/primekg_eligible_tune.yaml --only hgt gated \
+#          --freeze-to configs/primekg_eligible_frozen.yaml
+#
+# Validation data only. Both models get the SAME grid and the SAME trial budget.
+# uniform / param_matched are not tuned: they inherit the gated model's frozen values.
+base: primekg_eligible.yaml
+tune:
+  models: [hgt, gated]
+  settings: [disease]      # the setting the gate is meant to help; selection = mean val AP
+  seeds: [0]
+  max_trials: 4            # proposal 9.2: <= 4 development configurations per model, same for all
+  sample_seed: 0
+  epochs: 60               # shorter than the final runs; early stopping still on val AP
+  patience: 8
+  grid:                    # 2 x 2 = exactly 4 configurations; dropout 0.2, heads 2 from the base config
+    model.hidden: [64, 128]  # proposal 10.6: 128 only if supported -> tuning decides
+    train.lr: [1.0e-3, 5.0e-4]
+gates:
+  setting: disease
