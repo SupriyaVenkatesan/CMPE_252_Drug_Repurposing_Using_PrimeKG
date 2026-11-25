@@ -128,6 +128,11 @@ Unlabeled pairs may be real but undocumented treatments. Well-studied entities h
 neighbourhoods, so results are reported by degree. Paths show what a model relies on, not
 mechanism. Predictions say nothing about efficacy, safety or regulatory suitability.
 
+## Licence
+
+MIT for the code in this repository; see `LICENSE`. It does not cover the PrimeKG
+dataset, which is not distributed here and remains under the Harvard Dataverse terms.
+
 ## References
 
 1. Chandak, Huang, Zitnik. Building a knowledge graph to enable precision medicine. *Scientific Data* 10, 67 (2023). https://doi.org/10.1038/s41597-023-01960-3
