@@ -1938,8 +1938,8 @@
       0.0
     ]
   },
-  "eval_time_s": 0.18634247779846191,
-  "throughput_pairs_per_s": 1010145.417319087,
+  "eval_time_s": 0.08949995040893555,
+  "throughput_pairs_per_s": 2103163.1765150907,
   "setting": "drug",
   "model": "popularity",
   "seed": 0,

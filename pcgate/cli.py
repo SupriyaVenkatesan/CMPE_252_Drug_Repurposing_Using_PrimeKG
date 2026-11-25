@@ -204,11 +204,27 @@ def cmd_summarize(cfg, args):
     print(Path(path).read_text(encoding="utf-8"))
 
 
+def _available_checkpoints(cfg, setting):
+    root = Path(cfg["paths"]["results"]) / setting
+    return sorted({p.parent.parent.name for p in root.glob("*/seed*/model.pt")}) if root.is_dir() else []
+
+
 def _load_model(cfg, setting, mname, seed, device):
+    ckpt = Path(cfg["paths"]["results"]) / setting / mname / f"seed{seed}" / "model.pt"
+    if not ckpt.exists():
+        have = _available_checkpoints(cfg, setting)
+        raise SystemExit(
+            f"no trained checkpoint for model '{mname}' seed {seed} in setting '{setting}'.\n"
+            f"  looked for: {ckpt}\n"
+            f"  models with a checkpoint here: {have or 'none'}\n"
+            f"  -> train it first (`pcgate run --config <cfg> --only {mname}`), pick another model "
+            f"with --model, or point the config at the results directory that holds the checkpoints. "
+            f"Note that `run` saves model.pt next to each run's metrics, and the Colab results zip "
+            f"excludes *.pt, so checkpoints do not travel with downloaded results.")
     split, graph = _load(cfg, setting, device)
     in_dim = next(iter(graph.x.values())).size(1)
     model = LinkModel(mname, graph.metadata(), in_dim, cfg.get("model", {}), graph.num_nodes).to(device)
-    sd = torch.load(Path(cfg["paths"]["results"]) / setting / mname / f"seed{seed}" / "model.pt", map_location=device)
+    sd = torch.load(ckpt, map_location=device)
     model.load_state_dict(sd)
     model.eval()
     return split, graph, model
@@ -282,7 +298,8 @@ def cmd_explain(cfg, args):
     e = cfg.get("explain", {})
     dev = _device(cfg)
     setting = e.get("setting", "disease")
-    split, graph, model = _load_model(cfg, setting, e.get("model", "gated"), e.get("seed", 0), dev)
+    mname = args.model or e.get("model", "gated")
+    split, graph, model = _load_model(cfg, setting, mname, e.get("seed", 0), dev)
     set_seed(e.get("seed", 0))
     scorer = make_nn_scorer(model, graph, dev)
     te = split.test
@@ -364,7 +381,8 @@ def main(argv=None):
     ap.add_argument("--config", required=True)
     ap.add_argument("--only", nargs="*", help="run: restrict to these model names")
     ap.add_argument("--force", action="store_true", help="run: recompute even if metrics exist")
-    ap.add_argument("--model", help="candidates: model to rank with (popularity, sage, hgt, gated, ...)")
+    ap.add_argument("--model", help="candidates / explain: which model to use "
+                                    "(popularity, sage, hgt, gated, ...); overrides the config")
     ap.add_argument("--models", nargs="*", help="profile: models to profile")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)

@@ -1947,8 +1947,8 @@
       0.5008655546918773
     ]
   },
-  "eval_time_s": 0.2981691360473633,
-  "throughput_pairs_per_s": 3915301.279923749,
+  "eval_time_s": 0.22545957565307617,
+  "throughput_pairs_per_s": 5177965.9241280565,
   "setting": "random",
   "model": "popularity",
   "seed": 0,

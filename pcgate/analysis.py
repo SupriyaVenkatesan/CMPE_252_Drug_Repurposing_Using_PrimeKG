@@ -65,6 +65,13 @@ def schema_report(raw_csv: str, processed: str, out_dir: str | None = None) -> s
           f"| unique indication pairs | {audit['unique_indication_pairs']} |",
           f"| drugs with >=1 indication | {audit['drugs_with_indication']} |",
           f"| diseases with >=1 indication | {audit['diseases_with_indication']} |", ""]
+    if audit.get("note_edge_count"):
+        L += ["", "**Why the edge count differs from a naive rows / 2.** " + audit["note_edge_count"], ""]
+        by_rel = audit.get("edges_with_multiple_display_relations_by_relation", {})
+        if by_rel:
+            L += ["Affected relations: " + ", ".join(f"`{k}` ({v})" for k, v in by_rel.items()),
+                  "", "These keep one edge each; only the `display_relation` sub-type is dropped, "
+                  "and no model uses that column.", ""]
     if audit.get("invalid_reasons"):
         L += ["Invalid-row reasons: " + ", ".join(f"`{k}` x{v}" for k, v in audit["invalid_reasons"].items()), ""]
     miss = {k: v for k, v in audit["missing_values_per_column"].items() if v}
