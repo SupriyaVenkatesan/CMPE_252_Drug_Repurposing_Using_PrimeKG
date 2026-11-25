@@ -97,6 +97,24 @@ def deep_update(a: dict, b: dict) -> dict:
     return out
 
 
+# Controls must use exactly the gated model's frozen hyperparameters, otherwise a difference
+# between "gated" and "uniform"/"param_matched" could come from tuning rather than the gate.
+OVERRIDE_FALLBACK = {"uniform": "gated", "param_matched": "gated"}
+
+
+def run_cfg(cfg: dict, name: str) -> dict:
+    """Config for one model: `model_overrides.<name>` (written by `pcgate tune`) merged over the
+    shared `model:` / `train:` blocks.  An override may hold `model:` and/or `train:` keys.
+    Models without an override (and every config without `model_overrides`) are unchanged."""
+    ov = cfg.get("model_overrides") or {}
+    key = name if name in ov else OVERRIDE_FALLBACK.get(name)
+    o = ov.get(key) or {}
+    out = dict(cfg)
+    out["model"] = deep_update(cfg.get("model", {}), o.get("model", {}))
+    out["train"] = deep_update(cfg.get("train", {}), o.get("train", {}))
+    return out
+
+
 def get_logger(log_file: str | os.PathLike | None = None, name: str = "pcgate"):
     """Console + (optional) append-mode file logger with timestamps."""
     import logging

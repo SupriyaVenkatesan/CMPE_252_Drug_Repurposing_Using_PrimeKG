@@ -21,7 +21,7 @@ from .data.graph import GraphBundle
 from .data.splits import Split
 from .evaluate import evaluate_pool, make_nn_scorer
 from .models import LinkModel
-from .utils import set_seed
+from .utils import run_cfg, set_seed
 
 
 def _peak_memory_mb(device) -> float:
@@ -60,6 +60,7 @@ class NegativeSampler:
 def train_model(name: str, graph: GraphBundle, split: Split, cfg: dict, seed: int, device,
                 log=print) -> tuple[LinkModel, dict]:
     set_seed(seed)
+    cfg = run_cfg(cfg, name)          # per-model frozen hyperparameters, if any
     mcfg, tcfg = cfg.get("model", {}), cfg.get("train", {})
     in_dim = next(iter(graph.x.values())).size(1)
     model = LinkModel(name, graph.metadata(), in_dim, mcfg, graph.num_nodes).to(device)
@@ -116,5 +117,6 @@ def train_model(name: str, graph: GraphBundle, split: Split, cfg: dict, seed: in
     if best_state is not None:
         model.load_state_dict(best_state)
     info = {"history": hist, "best_val": best, "epochs_run": len(hist), "train_time_s": train_time,
-            "peak_memory_mb": _peak_memory_mb(device), "params": model.param_report()}
+            "peak_memory_mb": _peak_memory_mb(device), "params": model.param_report(),
+            "hparams": {"model": mcfg, "train": {k: v for k, v in tcfg.items() if k != "verbose"}}}
     return model, info

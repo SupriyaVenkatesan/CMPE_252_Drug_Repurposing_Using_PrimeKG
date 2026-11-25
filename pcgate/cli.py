@@ -7,6 +7,8 @@
   summarize   performance / efficiency tables, paired seed differences, bootstrap CIs
   candidates  ranked table of unlabeled drug-disease hypotheses from a trained model
   explain     path retrieval + perturbation case study for ~10 pairs
+  tune        bounded hyperparameter search on VALIDATION data; --freeze-to writes the frozen config
+  gates       gate statistics + evaluation-time gate controls on trained `gated` checkpoints
 """
 from __future__ import annotations
 
@@ -27,7 +29,7 @@ from .data.splits import SETTINGS, Split, make_split
 from .evaluate import evaluate_pool, make_nn_scorer, make_pop_scorer
 from .models import LinkModel, Popularity
 from .train import train_model
-from .utils import get_logger, load_config, read_json, set_seed, write_json
+from .utils import get_logger, load_config, read_json, run_cfg, set_seed, write_json
 
 
 def _device(cfg):
@@ -223,7 +225,7 @@ def _load_model(cfg, setting, mname, seed, device):
             f"excludes *.pt, so checkpoints do not travel with downloaded results.")
     split, graph = _load(cfg, setting, device)
     in_dim = next(iter(graph.x.values())).size(1)
-    model = LinkModel(mname, graph.metadata(), in_dim, cfg.get("model", {}), graph.num_nodes).to(device)
+    model = LinkModel(mname, graph.metadata(), in_dim, run_cfg(cfg, mname)["model"], graph.num_nodes).to(device)
     sd = torch.load(ckpt, map_location=device)
     model.load_state_dict(sd)
     model.eval()
@@ -370,20 +372,40 @@ def cmd_pooldiag(cfg, args):
     print(Path(p).read_text(encoding="utf-8"))
 
 
+def cmd_tune(cfg, args):
+    from .tune import tune
+    models = args.only or cfg.get("tune", {}).get("models", ["hgt", "gated"])
+    log = get_logger(Path(cfg["paths"]["results"]) / "tuning" / "tune.log").info
+    tune(cfg, _load, models, _device(cfg), log=log, freeze_to=args.freeze_to, config_path=args.config)
+
+
+def cmd_gates(cfg, args):
+    from .gates import analyse
+    g = cfg.get("gates", {})
+    setting = args.setting or g.get("setting", "disease")
+    seeds = [int(x) for x in (args.seeds or g.get("seeds", cfg["experiments"]["seeds"]))]
+    p = analyse(cfg, _load_model, setting, seeds, _device(cfg), log=print)
+    print(Path(p).read_text(encoding="utf-8"))
+
+
 COMMANDS = {"synth": cmd_synth, "download": cmd_download, "prepare": cmd_prepare, "schema": cmd_schema,
             "run": cmd_run, "profile": cmd_profile, "summarize": cmd_summarize, "coverage": cmd_coverage,
-            "pooldiag": cmd_pooldiag, "candidates": cmd_candidates, "explain": cmd_explain}
+            "pooldiag": cmd_pooldiag, "candidates": cmd_candidates, "explain": cmd_explain,
+            "tune": cmd_tune, "gates": cmd_gates}
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="pcgate", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=list(COMMANDS))
     ap.add_argument("--config", required=True)
-    ap.add_argument("--only", nargs="*", help="run: restrict to these model names")
+    ap.add_argument("--only", nargs="*", help="run / tune: restrict to these model names")
     ap.add_argument("--force", action="store_true", help="run: recompute even if metrics exist")
     ap.add_argument("--model", help="candidates / explain: which model to use "
                                     "(popularity, sage, hgt, gated, ...); overrides the config")
     ap.add_argument("--models", nargs="*", help="profile: models to profile")
+    ap.add_argument("--freeze-to", help="tune: also write a frozen config (base + model_overrides) here")
+    ap.add_argument("--setting", help="gates: random | drug | disease (default: gates.setting or disease)")
+    ap.add_argument("--seeds", nargs="*", help="gates: seeds of the gated checkpoints to analyse")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     COMMANDS[args.command](cfg, args)
